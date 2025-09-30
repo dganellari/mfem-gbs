@@ -1,21 +1,9 @@
 #include <gtest/gtest.h>
 #include "mfem.hpp"
 #include "../src/wave_solver.hpp"
+#include <string>
 
 using namespace mfem;
-
-// Test operator creation
-TEST(WaveTest, OperatorCreation)
-{
-   Mesh mesh("star.mesh", 1, 1);
-   H1_FECollection fe_coll(1, mesh.Dimension());
-   FiniteElementSpace fespace(&mesh, &fe_coll);
-   Array<int> ess_bdr(mesh.bdr_attributes.Size() ? mesh.bdr_attributes.Max() : 0);
-   ess_bdr = 1;
-
-   WaveOperator oper(fespace, ess_bdr, 1.0);
-   EXPECT_EQ(oper.Height(), fespace.GetTrueVSize());
-}
 
 // Test initial solution
 TEST(WaveTest, InitialSolution)
@@ -35,10 +23,25 @@ TEST(WaveTest, InitialRate)
    EXPECT_EQ(val, 0.0);
 }
 
+// Test operator creation
+TEST(WaveTest, OperatorCreation)
+{
+   std::string mesh_path = std::string(DATA_DIR) + "/star.mesh";
+   Mesh mesh(mesh_path.c_str(), 1, 1);
+   H1_FECollection fe_coll(1, mesh.Dimension());
+   FiniteElementSpace fespace(&mesh, &fe_coll);
+   Array<int> ess_bdr(mesh.bdr_attributes.Size() ? mesh.bdr_attributes.Max() : 0);
+   ess_bdr = 1;
+
+   WaveOperator oper(fespace, ess_bdr, 1.0);
+   EXPECT_EQ(oper.Height(), fespace.GetTrueVSize());
+}
+
 // Test a single time step
 TEST(WaveTest, TimeStep)
 {
-   Mesh mesh("star.mesh", 1, 1);
+   std::string mesh_path = std::string(DATA_DIR) + "/star.mesh";
+   Mesh mesh(mesh_path.c_str(), 1, 1);
    H1_FECollection fe_coll(1, mesh.Dimension());
    FiniteElementSpace fespace(&mesh, &fe_coll);
 
@@ -70,7 +73,8 @@ TEST(WaveTest, TimeStep)
 // Test with different speed
 TEST(WaveTest, DifferentSpeed)
 {
-   Mesh mesh("star.mesh", 1, 1);
+   std::string mesh_path = std::string(DATA_DIR) + "/star.mesh";
+   Mesh mesh(mesh_path.c_str(), 1, 1);
    H1_FECollection fe_coll(1, mesh.Dimension());
    FiniteElementSpace fespace(&mesh, &fe_coll);
    Array<int> ess_bdr(mesh.bdr_attributes.Size() ? mesh.bdr_attributes.Max() : 0);
