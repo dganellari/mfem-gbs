@@ -8,78 +8,95 @@
 using namespace std;
 using namespace mfem;
 
-int main()
+int main(int argc, char *argv[])
 {
-   // Parameters
-   const char *mesh_file = "star.mesh";
-   int ref_levels = 1;
-   int order = 2;
-   int ode_solver_type = 10;
-   real_t t_final = 0.1;
-   real_t dt = 1.0e-2;
-   real_t speed = 1.0;
-   bool dirichlet = true;
+    // Parameters (defaults)
+    std::string mesh_file = std::string(DATA_DIR) + "/star.mesh";
+    int ref_levels = 1;
+    int order = 2;
+    int ode_solver_type = 10;
+    real_t t_final = 0.1;
+    real_t dt = 1.0e-2;
+    real_t speed = 1.0;
+    bool dirichlet = true;
 
-   cout << "MFEM Wave Mini-App" << endl;
+    // Parse command-line arguments
+    OptionsParser args(argc, argv);
+    args.AddOption(&mesh_file, "-m", "--mesh", "Mesh file to use.");
+    args.AddOption(&ref_levels, "-r", "--refine", "Number of refinements.");
+    args.AddOption(&order, "-o", "--order", "Finite element order.");
+    args.AddOption(&ode_solver_type, "-s", "--solver", "ODE solver type.");
+    args.AddOption(&t_final, "-tf", "--t-final", "Final time.");
+    args.AddOption(&dt, "-dt", "--time-step", "Time step size.");
+    args.AddOption(&speed, "-c", "--speed", "Wave speed.");
+    args.AddOption(&dirichlet, "-d", "--dirichlet", "-n", "--neumann", "Dirichlet boundary conditions.");
+    args.Parse();
+    if (!args.Good())
+    {
+        args.PrintUsage(std::cout);
+        return 1;
+    }
 
-   // Read mesh
-   Mesh mesh(mesh_file, 1, 1);
-   int dim = mesh.Dimension();
+    cout << "MFEM Wave Mini-App" << endl;
 
-   // ODE solver
-   SecondOrderODESolver *ode_solver = SecondOrderODESolver::Select(ode_solver_type);
+    // Read mesh
+    Mesh mesh(mesh_file, 1, 1);
+    int dim = mesh.Dimension();
 
-   // Refine mesh
-   for (int lev = 0; lev < ref_levels; lev++)
-   {
-      mesh.UniformRefinement();
-   }
+    // ODE solver
+    SecondOrderODESolver *ode_solver = SecondOrderODESolver::Select(ode_solver_type);
 
-   // FE space
-   H1_FECollection fe_coll(order, dim);
-   FiniteElementSpace fespace(&mesh, &fe_coll);
+    // Refine mesh
+    for (int lev = 0; lev < ref_levels; lev++)
+    {
+        mesh.UniformRefinement();
+    }
 
-   cout << "Number of unknowns: " << fespace.GetTrueVSize() << endl;
+    // FE space
+    H1_FECollection fe_coll(order, dim);
+    FiniteElementSpace fespace(&mesh, &fe_coll);
 
-   GridFunction u_gf(&fespace);
-   GridFunction dudt_gf(&fespace);
+    cout << "Number of unknowns: " << fespace.GetTrueVSize() << endl;
 
-   // Initial conditions
-   FunctionCoefficient u_0(InitialSolution);
-   u_gf.ProjectCoefficient(u_0);
-   Vector u;
-   u_gf.GetTrueDofs(u);
+    GridFunction u_gf(&fespace);
+    GridFunction dudt_gf(&fespace);
 
-   FunctionCoefficient dudt_0(InitialRate);
-   dudt_gf.ProjectCoefficient(dudt_0);
-   Vector dudt;
-   dudt_gf.GetTrueDofs(dudt);
+    // Initial conditions
+    FunctionCoefficient u_0(InitialSolution);
+    u_gf.ProjectCoefficient(u_0);
+    Vector u;
+    u_gf.GetTrueDofs(u);
 
-   // Wave operator
-   Array<int> ess_bdr(mesh.bdr_attributes.Size() ? mesh.bdr_attributes.Max() : 0);
-   if (dirichlet) ess_bdr = 1; else ess_bdr = 0;
-   WaveOperator oper(fespace, ess_bdr, speed);
+    FunctionCoefficient dudt_0(InitialRate);
+    dudt_gf.ProjectCoefficient(dudt_0);
+    Vector dudt;
+    dudt_gf.GetTrueDofs(dudt);
 
-   // Time integration
-   ode_solver->Init(oper);
-   real_t t = 0.0;
+    // Wave operator
+    Array<int> ess_bdr(mesh.bdr_attributes.Size() ? mesh.bdr_attributes.Max() : 0);
+    if (dirichlet) ess_bdr = 1; else ess_bdr = 0;
+    WaveOperator oper(fespace, ess_bdr, speed);
 
-   int steps = t_final / dt;
-   for (int ti = 1; ti <= steps; ti++)
-   {
-      ode_solver->Step(u, dudt, t, dt);
-      cout << "Step " << ti << ", t = " << t << endl;
-      oper.SetParameters(u);
-   }
+    // Time integration
+    ode_solver->Init(oper);
+    real_t t = 0.0;
 
-   // Save final solution
-   u_gf.SetFromTrueDofs(u);
-   ofstream osol("final_solution.gf");
-   u_gf.Save(osol);
+    int steps = t_final / dt;
+    for (int ti = 1; ti <= steps; ti++)
+    {
+        ode_solver->Step(u, dudt, t, dt);
+        cout << "Step " << ti << ", t = " << t << endl;
+        oper.SetParameters(u);
+    }
 
-   cout << "Simulation complete. Solution saved to final_solution.gf" << endl;
+    // Save final solution
+    u_gf.SetFromTrueDofs(u);
+    ofstream osol("final_solution.gf");
+    u_gf.Save(osol);
 
-   delete ode_solver;
+    cout << "Simulation complete. Solution saved to final_solution.gf" << endl;
 
-   return 0;
+    delete ode_solver;
+
+    return 0;
 }
