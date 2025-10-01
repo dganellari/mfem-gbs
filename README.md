@@ -41,10 +41,10 @@ ctest --output-on-failure
 ```
 
 ## TDD Workflow
-1. **Red**: Write a failing test in `test/unit/test_wave.cpp`
-2. **Green**: Implement minimal code to pass
-3. **Refactor**: Improve code while keeping tests green
-4. **Repeat**: Run `ctest` continuously during development
+1. 🔴 **Red**: Write a failing test in `test/unit/test_wave.cpp`
+2. 🟢 **Green**: Implement minimal code to pass
+3. 🔵 **Refactor**: Improve code while keeping tests green
+4. 🔄 **Repeat**: Run `ctest` continuously during development
 
 
 ## Project Structure
