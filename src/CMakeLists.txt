@@ -1,5 +1,5 @@
-add_library(wave_solver wave_solver.cpp)
-target_link_libraries(wave_solver mfem)
+add_library(wave_solver core/wave_solver.cpp)
+target_link_libraries(wave_solver PUBLIC mfem)
 
 add_executable(wave_app main.cpp)
 target_link_libraries(wave_app wave_solver)
