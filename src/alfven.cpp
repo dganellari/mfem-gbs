@@ -17,7 +17,7 @@ struct Parameters {
     double dt    = tmax/Nt;
     int order    = 1;
     double tol   = 1e-14;
-    const char* mesh_file = "./ref-cube.mesh";
+    const char* mesh_file = std::string(DATA_DIR)+"/ref-cube.mesh";
     double dt_over_two = dt/2.0;
     int iter     = 1000;
     const char* path_save = "./out/classic/";
