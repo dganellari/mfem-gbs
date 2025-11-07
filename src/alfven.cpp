@@ -17,7 +17,7 @@ struct Parameters {
     double dt    = tmax/Nt;
     int order    = 1;
     double tol   = 1e-14;
-    const char* mesh_file = std::string(DATA_DIR)+"/ref-cube.mesh";
+    std::string mesh_file = std::string(DATA_DIR)+"/ref-cube.mesh";
     double dt_over_two = dt/2.0;
     int iter     = 1000;
     const char* path_save = "./out/classic/";
@@ -53,7 +53,7 @@ int main(int argc, char *argv[]) {
     // p_sock_init.precision(8);
 
     // mesh
-    const char *mesh_file = param.mesh_file;
+    const char *mesh_file = param.mesh_file.c_str();
     mfem::Mesh mesh(mesh_file, 1, 1); 
     int dim = mesh.Dimension();
     for (int i =0; i<ref_lvls; i++){
