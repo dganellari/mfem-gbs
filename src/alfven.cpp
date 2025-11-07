@@ -115,10 +115,10 @@ int main(int argc, char *argv[]) {
     
     // system size
     int ssize = u.Size() + p.Size();
-    std::cout << "size: " << ssize << std::endl;
+    std::cout << "size: " << ssize << std::endl << std::endl ;
 
     // vector x: the "full" one (not the tdof one)
-    // here we implicitely also set the BC, 
+    // here we implicitly also set the BC, 
     // as they are given by the u_0_coeff,p_0_coeff
     mfem::Vector x(ssize); // maybe use a blockvector instead
     x.SetVector(u,0);
@@ -206,8 +206,10 @@ int main(int argc, char *argv[]) {
 
     // time loop
     double t;
+    double energy;
+    int jj=0;
     for (t = dt ; t < tmax+dt ; t+=dt) {
-    
+        jj += 1;
         // update old values before computing new ones
         u_old = u;
         p_old = p;
@@ -235,17 +237,10 @@ int main(int argc, char *argv[]) {
         x.GetSubVector(p_dofs, p);
 
         // energy
-        double energy = blf_M.InnerProduct(u_old,u_old)
-                       + blf_N_full.InnerProduct(p_old,p_old)
-                       - blf_N_par.InnerProduct(p_old,p_old);
-        std::cout << "t = " << t << ", energy = " << energy << std::endl;
-
-        // stream to glvis
-        // u_sock << "solution\n" << mesh << u
-        //     << "window_title 'u'" << std::endl;
-        // p_sock << "solution\n" << mesh << p
-        //     << "window_title 'p'" << std::endl;
-        // std::this_thread::sleep_for(std::chrono::milliseconds(500));
+        energy = blf_M.InnerProduct(u_old,u_old)
+                +blf_N_full.InnerProduct(p_old,p_old)
+                -blf_N_par.InnerProduct(p_old,p_old);
+        std::cout << "step:\t" << jj << "\tt = " << t << "\tenergy = " << energy << std::endl;
         
         // Export data to paraview
         Nit ++;
