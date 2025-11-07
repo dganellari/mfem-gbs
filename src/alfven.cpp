@@ -39,7 +39,6 @@ int main(int argc, char *argv[]) {
     mfem::OptionsParser args(argc, argv);
     args.AddOption(&ref_lvls, "-r", "--refine", "Number of refinements.");
     args.AddOption(&Nt, "-nt", "--ntsteps", "Number of timesteps.");
-    args.AddOption(&tmax, "-tm", "--tmax", "Max time.");
     args.Parse();
 
     double dt    = tmax/Nt;
