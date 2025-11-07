@@ -11,8 +11,8 @@ mfem::real_t p_0(const mfem::Vector &x);
 void bfield(const mfem::Vector &x, mfem::Vector &v);
 
 struct Parameters {
-    int ref_lvls = 4;
-    int Nt       = 64;
+    int ref_lvls = 2;   // mesh refinement levels
+    int Nt       = 16;  // number of time steps
     double tmax  = pi*2.*std::sqrt(2.);
     double dt    = tmax/Nt;
     int order    = 1;
@@ -31,7 +31,7 @@ int main(int argc, char *argv[]) {
     // simulation parameters
     Parameters param;
     int ref_lvls = param.ref_lvls;
-    double dt    = param.dt;
+    int Nt       = param.Nt;
     double tmax  = param.tmax;
     int order    = param.order;
     double tol   = param.tol;
@@ -39,18 +39,14 @@ int main(int argc, char *argv[]) {
     int iter     = param.iter;
     const char* path_save = param.path_save;
 
-    // glvis
-    // char vishost[] = "localhost";
-    // int  visport1   = 19916;
-    // int  visport2   = 19917; // call with ./glvis -p 19917
-    // mfem::socketstream u_sock(vishost, visport1);
-    // mfem::socketstream p_sock(vishost, visport1);
-    // u_sock.precision(8);
-    // p_sock.precision(8);
-    // mfem::socketstream u_sock_init(vishost, visport1);
-    // mfem::socketstream p_sock_init(vishost, visport1);
-    // u_sock_init.precision(8);
-    // p_sock_init.precision(8);
+    // Parse command-line arguments
+    mfem::OptionsParser args(argc, argv);
+    args.AddOption(&ref_lvls, "-r", "--refine", "Number of refinements.");
+    args.AddOption(&Nt, "-nt", "--ntsteps", "Number of timesteps.");
+    args.AddOption(&tmax, "-tm", "--tmax", "Max time.");
+    args.Parse();
+
+    double dt    = tmax/Nt;
 
     // mesh
     const char *mesh_file = param.mesh_file.c_str();
@@ -92,10 +88,6 @@ int main(int argc, char *argv[]) {
     mfem::FunctionCoefficient p_0_coeff(p_0);
     u.ProjectCoefficient(u_0_coeff);
     p.ProjectCoefficient(p_0_coeff);
-
-    // glvis: init cond
-    // u_sock_init << "solution\n" << mesh << u << "window_title 'init cond u'" << std::endl;
-    // p_sock_init << "solution\n" << mesh << p << "window_title 'init cond p'" << std::endl;
 
     // exporting tools to paraview
     mfem::ParaViewDataCollection *pd = new mfem::ParaViewDataCollection(path_save, &mesh);
@@ -251,14 +243,13 @@ int main(int argc, char *argv[]) {
     } // time loop
     
     // error
+    // u:         FE solution 
+    // u_0_coeff: reference/exact solution 
     mfem::real_t up_err = u.ComputeL2Error(u_0_coeff);
     std::cout << "u   L2 error " << up_err << std::endl;
+
     mfem::real_t p_err = p.ComputeL2Error(p_0_coeff);
     std::cout << "phi L2 error " << p_err << std::endl;
-    
-    // glvis
-    // u_sock << "solution\n" << mesh << u << "window_title 'SOLu'" << std::endl;
-    // p_sock << "solution\n" << mesh << p << "window_title 'SOLp'" << std::endl;
 
     // free memory
     delete fec_CG;
