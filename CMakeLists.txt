@@ -54,3 +54,4 @@ endif()
 
 # Installation rules
 install(TARGETS wave_app DESTINATION bin)
+install(TARGETS alfven   DESTINATION bin)
