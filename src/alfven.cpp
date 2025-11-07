@@ -3,12 +3,8 @@
 #include <algorithm>
 #include <chrono>
 #include "mfem.hpp"
+#include "core/functions.hpp"
 #include <thread>
-
-double pi = 3.14159265358979323846;
-mfem::real_t u_0(const mfem::Vector &x);
-mfem::real_t p_0(const mfem::Vector &x);
-void bfield(const mfem::Vector &x, mfem::Vector &v);
 
 struct Parameters {
     int ref_lvls = 2;   // mesh refinement levels
@@ -250,7 +246,7 @@ int main(int argc, char *argv[]) {
 
     mfem::real_t p_err = p.ComputeL2Error(p_0_coeff);
     std::cout << "phi L2 error " << p_err << std::endl;
-
+    
     // free memory
     delete fec_CG;
 
@@ -260,23 +256,3 @@ int main(int argc, char *argv[]) {
     std::cout << "Elapsed time: " << elapsed.count() << " seconds\n";
 
 } // main
-
-mfem::real_t u_0(const mfem::Vector &x) {
-    
-    double X = x(0);
-    double Y = x(1);
-    double Z = x(2);
-    // return std::sin(pi*X) * std::sin(pi*Y) * std::sin(pi*Z);
-    return std::sin(pi*X) * std::sin(pi*Y) * (1.- std::cos(pi*Z));
-}
-
-mfem::real_t p_0(const mfem::Vector &x) {
-    return 0.;
-}
-
-void bfield(const mfem::Vector &x, mfem::Vector &returnvalue) { 
-   
-    returnvalue(0) = 0.0; //+ 0.0*x(0);
-    returnvalue(1) = 0.0; //+ 0.0*x(0);
-    returnvalue(2) = 1.0; //+ 0.0*x(0);
-}
