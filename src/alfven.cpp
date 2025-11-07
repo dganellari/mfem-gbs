@@ -56,9 +56,15 @@ int main(int argc, char *argv[]) {
     const char *mesh_file = param.mesh_file.c_str();
     mfem::Mesh mesh(mesh_file, 1, 1); 
     int dim = mesh.Dimension();
-    for (int i =0; i<ref_lvls; i++){
+    std::cout << "Mesh Dimension : " << dim << std::endl;
+    for (int i=0; i<ref_lvls; i++){
+        std::cout << "Refinement: " << i+1 << std::endl;
         mesh.UniformRefinement();
     }
+
+    // Print some mesh info
+    std::cout << "\nNumber of elements : " << mesh.GetNE() << std::endl;
+    std::cout <<   "Number of vertices : " << mesh.GetNV() << std::endl;
 
     // FE spaces
     mfem::FiniteElementCollection *fec_CG = new mfem::H1_FECollection(order,dim);
@@ -66,6 +72,9 @@ int main(int argc, char *argv[]) {
     mfem::FiniteElementSpace CG_u(&mesh, fec_CG);
     // mfem::FiniteElementSpace CG_u(&mesh, fec_DG);
     mfem::FiniteElementSpace CG_p(&mesh, fec_CG);
+
+    std::cout << "Number of u unknowns: " << CG_u.GetTrueVSize() << std::endl;
+    std::cout << "Number of p unknowns: " << CG_p.GetTrueVSize() << std::endl;
 
     // essential true dofs
     mfem::Array<int> ess_tdof_p;
