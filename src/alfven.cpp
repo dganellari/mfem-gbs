@@ -3,7 +3,7 @@
 #include <algorithm>
 #include <chrono>
 #include "mfem.hpp"
-#include "core/functions.hpp"
+#include "utils/functions.hpp"
 #include <thread>
 
 struct Parameters {

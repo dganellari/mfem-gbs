@@ -1,6 +1,6 @@
 #include <gtest/gtest.h>
 #include "mfem.hpp"
-#include "core/functions.hpp"
+#include "utils/functions.hpp"
 #include <string>
 
 // Test structure:

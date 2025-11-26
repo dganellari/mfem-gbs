@@ -6,7 +6,7 @@ target_link_libraries(wave_app wave_solver)
 target_compile_definitions(wave_app PRIVATE DATA_DIR="${CMAKE_SOURCE_DIR}/data")
 
 #################################################################################
-add_library(functions core/functions.cpp)
+add_library(functions utils/functions.cpp)
 target_link_libraries(functions PUBLIC mfem)
 
 add_executable(alfven alfven.cpp)
