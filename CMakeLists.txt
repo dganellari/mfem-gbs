@@ -55,3 +55,5 @@ endif()
 # Installation rules
 install(TARGETS wave_app DESTINATION bin)
 install(TARGETS alfven   DESTINATION bin)
+# Keep both versions for now
+install(TARGETS alfven_app DESTINATION bin)
