@@ -4,7 +4,7 @@ add_executable(test_alfven unit/test_alfven.cpp)
 target_link_libraries(test_wave 
     PRIVATE 
         GTest::gtest_main 
-        wave_solver
+        mfem-gbs
 )
 target_include_directories(test_wave PRIVATE ${CMAKE_SOURCE_DIR}/src)
 target_compile_definitions(test_wave PRIVATE DATA_DIR="${CMAKE_SOURCE_DIR}/data")
