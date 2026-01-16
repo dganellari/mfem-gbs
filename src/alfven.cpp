@@ -10,7 +10,7 @@
 struct Parameters {
     int ref_lvls = 2;   // mesh refinement levels
     int Nt       = 16;  // number of time steps
-    double tmax  = pi*2.*std::sqrt(2.);
+    double tmax  = M_PI*2.*std::sqrt(2.);
     double dt    = tmax/Nt;
     int order    = 1;
     double tol   = 1e-14;
@@ -80,8 +80,8 @@ int main(int argc, char *argv[]) {
     mfem::GridFunction p(&CG_p);
 
     // initial condition
-    mfem::FunctionCoefficient u_0_coeff(u_0);
-    mfem::FunctionCoefficient p_0_coeff(p_0);
+    mfem::FunctionCoefficient u_0_coeff(mfem::u_0);
+    mfem::FunctionCoefficient p_0_coeff(mfem::p_0);
     u.ProjectCoefficient(u_0_coeff);
     p.ProjectCoefficient(p_0_coeff);
 
@@ -131,7 +131,7 @@ int main(int argc, char *argv[]) {
     M.Finalize();
 
     // Matrix N: parallel diffusion
-    mfem::VectorFunctionCoefficient b_gfcoeff(dim, bfield);
+    mfem::VectorFunctionCoefficient b_gfcoeff(dim, mfem::bfield);
     mfem::OuterProductCoefficient K(b_gfcoeff, b_gfcoeff);
     mfem::BilinearForm blf_N_par(&CG_p);
     blf_N_par.AddDomainIntegrator(new mfem::DiffusionIntegrator(K)); // (b·∇p,b·∇q)

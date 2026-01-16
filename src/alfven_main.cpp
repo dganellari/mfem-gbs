@@ -68,8 +68,8 @@ int main(int argc, char *argv[])
     mfem::GridFunction p(&CG_p);
 
     // Initial conditions
-    mfem::FunctionCoefficient u_0_coeff(u_0);
-    mfem::FunctionCoefficient p_0_coeff(p_0);
+    mfem::FunctionCoefficient u_0_coeff(mfem::u_0);
+    mfem::FunctionCoefficient p_0_coeff(mfem::p_0);
     u.ProjectCoefficient(u_0_coeff);
     p.ProjectCoefficient(p_0_coeff);
 
