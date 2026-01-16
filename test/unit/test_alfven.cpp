@@ -41,3 +41,20 @@ TEST(AlfvenTest, InitialSolutionP)
     mfem::real_t val = mfem::p_0(x); // p_0 is zero everywhere
     EXPECT_EQ(val, 0.0) << "Initial pressure should be zero everywhere";
 }
+
+// Test bfield
+TEST(AlfvenTest, MagneticField)
+{
+    mfem::Vector x(3);
+    x[0] = 0.5;
+    x[1] = 0.5;
+    x[2] = 0.5;
+    mfem::Vector b(3);
+    mfem::bfield(x, b);
+    
+    // to revise expected values based on bfield definition
+    EXPECT_EQ(b[0], 0.0);
+    EXPECT_EQ(b[1], 0.0);
+    EXPECT_EQ(b[2], 1.0);
+}
+
