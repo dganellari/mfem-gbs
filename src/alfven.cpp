@@ -5,6 +5,7 @@
 #include "mfem.hpp"
 #include "utils/functions.hpp"
 #include <thread>
+#include <iomanip>
 
 struct Parameters {
     int ref_lvls = 2;   // mesh refinement levels
@@ -241,10 +242,10 @@ int main(int argc, char *argv[]) {
     // u:         FE solution 
     // u_0_coeff: reference/exact solution 
     mfem::real_t up_err = u.ComputeL2Error(u_0_coeff);
-    std::cout << "u   L2 error " << up_err << std::endl;
+    std::cout << "u   L2 error " << std::scientific << std::setprecision(16) << up_err << std::endl;
 
     mfem::real_t p_err = p.ComputeL2Error(p_0_coeff);
-    std::cout << "phi L2 error " << p_err << std::endl;
+    std::cout << "phi L2 error " << std::scientific << std::setprecision(16) << p_err << std::endl;
     
     // free memory
     delete fec_CG;
