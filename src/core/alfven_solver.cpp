@@ -115,7 +115,7 @@ void AlfvenOperator::FormRHS(const Vector &u_old, const Vector &p_old, Vector &b
     b.AddSubVector(bsub2, u_size);
 }
 
-real_t AlfvenOperator::ComputeEnergy(const Vector &u, const Vector &p)
+real_t AlfvenOperator::ComputeEnergy(const Vector &u, const Vector &p) const
 {
     real_t energy =      M->InnerProduct(u, u) +
                     N_full->InnerProduct(p, p) -

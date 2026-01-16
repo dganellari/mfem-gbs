@@ -43,7 +43,7 @@ public:
 
     Array<int>& GetEssentialTDofs() { return ess_tdof_p; }
 
-    real_t ComputeEnergy(const Vector &u, const Vector &p);
+    real_t ComputeEnergy(const Vector &u, const Vector &p) const;
 
     ~AlfvenOperator();
 };
