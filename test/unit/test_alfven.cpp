@@ -14,13 +14,12 @@ TEST(AlfvenTest, BasicTest)
 }
 
 // Simple test for initial solution.
-TEST(AlfvenTest, InitSolU)
+TEST(AlfvenTest, InitialSolutionU)
 {
     mfem::Vector x(3);
     x[0] = 0.0;
     x[1] = 0.0;
     x[2] = 0.0;
-
     mfem::real_t val1 = mfem::u_0(x);
     EXPECT_EQ(val1, 0.0);
 
@@ -32,10 +31,13 @@ TEST(AlfvenTest, InitSolU)
     EXPECT_GT(val2, 0.0); // should be non-zero
 }
 
-// // Simple test for initial solution.
-// TEST(AlfvenTest, InitSolP)
-// {
-
-
-
-// }
+// Simple test for initial solution.
+TEST(AlfvenTest, InitialSolutionP)
+{
+    mfem::Vector x(3);
+    x[0] = 0.5;
+    x[1] = 0.5;
+    x[2] = 0.5;
+    mfem::real_t val = mfem::p_0(x); // p_0 is zero everywhere
+    EXPECT_EQ(val, 0.0) << "Initial pressure should be zero everywhere";
+}
