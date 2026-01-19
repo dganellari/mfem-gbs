@@ -8,6 +8,9 @@
 // TEST(TestSuiteName, TestName) { ...body ...}
 // ***  TestSuiteName, TestName should NOT contain underscores 
 
+// TEST   is for simple tests without shared setup/teardown
+// TEST_F is for tests that share common setup/teardown via a fixture class
+
 TEST(AlfvenTest, BasicTest)
 {
     EXPECT_EQ(1, 1);
@@ -56,5 +59,188 @@ TEST(AlfvenTest, MagneticField)
     EXPECT_EQ(b[0], 0.0);
     EXPECT_EQ(b[1], 0.0);
     EXPECT_EQ(b[2], 1.0);
+}
+
+// Common setup (mesh, FE space) for fixture tests
+class AlfvenTestFixture : public ::testing::Test {
+protected:
+    std::string mesh_file;
+    mfem::Mesh* mesh;
+    mfem::H1_FECollection* fe_coll_u;
+    mfem::H1_FECollection* fe_coll_p; // could use the same FE for both u,p
+    mfem::FiniteElementSpace* fespace_u;
+    mfem::FiniteElementSpace* fespace_p;
+    
+    void SetUp() override {
+        mesh_file = std::string(DATA_DIR) + "/ref-cube.mesh";
+        mesh = new mfem::Mesh(mesh_file.c_str(), 1, 1);
+        int dim = mesh->Dimension();
+        
+        // H1 space for velocity u
+        fe_coll_u = new mfem::H1_FECollection(1, dim);
+        fespace_u = new mfem::FiniteElementSpace(mesh, fe_coll_u);
+        
+        // H1 space for pressure p
+        fe_coll_p = new mfem::H1_FECollection(1, dim);
+        fespace_p = new mfem::FiniteElementSpace(mesh, fe_coll_p);
+    }
+    
+    void TearDown() override {
+        delete mesh;
+        delete fe_coll_u;
+        delete fe_coll_p;
+        delete fespace_u;
+        delete fespace_p;
+    }
+};
+
+// Test: AlfvenOperator constructs successfully with correct block dimensions
+TEST_F(AlfvenTestFixture, OperatorCreation)
+{
+    mfem::real_t dt = 0.01;
+    mfem::AlfvenOperator oper(*fespace_u, *fespace_p, dt);
+    
+    mfem::BlockOperator& A = oper.GetSystemOperator();
+    
+    // Check dimensions
+    int expected_size = fespace_u->GetNDofs() + fespace_p->GetNDofs();
+    EXPECT_EQ(A.Height(), expected_size);
+    EXPECT_EQ(A.Width(), expected_size);
+}
+
+// Test: Essential boundary DOFs are correctly identified and within valid range
+TEST_F(AlfvenTestFixture, EssentialDOFs)
+{
+    mfem::real_t dt = 0.01;
+    mfem::AlfvenOperator oper(*fespace_u, *fespace_p, dt);
+    
+    mfem::Array<int>& ess_tdofs = oper.GetEssentialTDofs();
+    
+    // Essential DOFs should exist
+    // boundary conditions for pressure, p is in the 2nd block
+    EXPECT_GE(ess_tdofs.Size(), 0);
+    
+    // All DOF indices should be valid
+    int total_size = fespace_u->GetNDofs() + fespace_p->GetNDofs();
+    for (int i = 0; i < ess_tdofs.Size(); i++)
+    {
+        EXPECT_GT(ess_tdofs[i], 0);
+        EXPECT_LT(ess_tdofs[i], total_size);
+        // std::cout << "Essential DOF " << i << ": " << ess_tdofs[i] << std::endl;
+    }
+}
+
+// Test: FormRHS produces non-zero output for non-zero input
+TEST_F(AlfvenTestFixture, RHSFormation)
+{
+    mfem::real_t dt = 0.01;
+    mfem::AlfvenOperator oper(*fespace_u, *fespace_p, dt);
+    
+    int u_size = fespace_u->GetNDofs();
+    int p_size = fespace_p->GetNDofs();
+    int total_size = u_size + p_size;
+    
+    mfem::Vector u_old(u_size);
+    mfem::Vector p_old(p_size);
+    mfem::Vector b(total_size);
+    
+    u_old = 1.0;
+    p_old = 0.5;
+    b = 0.0;
+    
+    oper.FormRHS(u_old, p_old, b);
+    
+    // RHS should be non-zero for non-zero input
+    mfem::real_t rhs_norm = b.Norml2();
+    EXPECT_GT(rhs_norm, 0.0);
+}
+
+// Test: ComputeEnergy returns zero for zero state, positive for non-zero state
+TEST_F(AlfvenTestFixture, EnergyComputation)
+{
+    mfem::real_t dt = 0.01;
+    mfem::AlfvenOperator oper(*fespace_u, *fespace_p, dt);
+    
+    int u_size = fespace_u->GetNDofs();
+    int p_size = fespace_p->GetNDofs();
+    
+    // Zero state should have zero energy
+    mfem::Vector u_zero(u_size);
+    mfem::Vector p_zero(p_size);
+    u_zero = 0.0;
+    p_zero = 0.0;
+    
+    mfem::real_t energy_zero = oper.ComputeEnergy(u_zero, p_zero);
+    // Verifies that the two double values are approximately equal
+    EXPECT_DOUBLE_EQ(energy_zero, 0.0);
+    
+    // Non-zero state should have positive energy
+    mfem::Vector u(u_size);
+    mfem::Vector p(p_size);
+    u = 1.0;
+    p = 1.0;
+    
+    mfem::real_t energy = oper.ComputeEnergy(u, p);
+    EXPECT_GT(energy, 0.0) << "Energy should be positive for non-zero state";
+}
+
+// Test: Projection of u_0 and p_0 onto FE spaces
+TEST_F(AlfvenTestFixture, Projections)
+{
+    // Project initial conditions
+    mfem::GridFunction u_gf(fespace_u);
+    mfem::GridFunction p_gf(fespace_p);
+    
+    mfem::FunctionCoefficient u_coeff(mfem::u_0);
+    mfem::FunctionCoefficient p_coeff(mfem::p_0);
+    
+    u_gf.ProjectCoefficient(u_coeff);
+    p_gf.ProjectCoefficient(p_coeff);
+    
+    mfem::Vector u, p;
+    u_gf.GetTrueDofs(u);
+    p_gf.GetTrueDofs(p);
+    
+    // Check that projection worked as expected
+    EXPECT_GT(u.Norml2(), 0.0) << "u should be non-zero";
+    EXPECT_DOUBLE_EQ(p.Norml2(), 0.0) << "p should be zero (p_0 = 0)";
+}
+
+// Test: SetVector/GetSubVector workflow for combining and extracting u and p
+TEST_F(AlfvenTestFixture, VectorAssemblyExtraction)
+{
+    int u_size = fespace_u->GetNDofs();
+    int p_size = fespace_p->GetNDofs();
+    int total_size = u_size + p_size;
+    
+    // Create separate u and p vectors
+    mfem::Vector u(u_size);
+    mfem::Vector p(p_size);
+    u = 2.0;
+    p = 3.0;
+    
+    // Assemble into a combined vector (as in alfven_main)
+    mfem::Vector x(total_size);
+    x.SetVector(u, 0);       // place u at start
+    x.SetVector(p, u_size);  // place p after u
+    
+    // Extract back (as in alfven_main)
+    // Practically, these are arrays holding the dof indices that correspond to u and p
+    mfem::Array<int> u_dofs(u_size);
+    mfem::Array<int> p_dofs(p_size);
+    std::iota(&u_dofs[0], &u_dofs[u_size], 0);
+    std::iota(&p_dofs[0], &p_dofs[p_size], u_size);
+    
+    mfem::Vector u_extracted(u_size);
+    mfem::Vector p_extracted(p_size);
+    x.GetSubVector(u_dofs, u_extracted); // get u block
+    x.GetSubVector(p_dofs, p_extracted); // get p block
+    
+    // Check first and last components match
+    EXPECT_DOUBLE_EQ(u_extracted[0],        2.0);
+    EXPECT_DOUBLE_EQ(u_extracted[u_size-1], 2.0);
+
+    EXPECT_DOUBLE_EQ(p_extracted[0],        3.0);
+    EXPECT_DOUBLE_EQ(p_extracted[p_size-1], 3.0);
 }
 
