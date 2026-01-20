@@ -227,3 +227,39 @@ TEST_F(AlfvenTestFixture, CouplingBlocks)
     y_from_F -= y_from_E_transpose;  // Should be zero
     EXPECT_LT(y_from_F.Norml2(), 1e-12) << "F should equal E^T";
 }
+
+// Test: Different time steps should affect RHS differently
+// The coupling (off-diagonal) matrices E, F (F = E^T) depend on dt (scaled by dt/2)
+TEST_F(AlfvenTestFixture, TimestepScaling)
+{
+    int u_size = fespace_u->GetNDofs();
+    int p_size = fespace_p->GetNDofs();
+    int total_size = u_size + p_size;
+
+    mfem::Vector u(u_size);
+    mfem::Vector p(p_size);
+
+    u = 1.0;
+    p = 1.0;
+
+    const mfem::real_t small_dt = 0.001;
+    const mfem::real_t large_dt = 0.100;    // 100x larger
+
+    // Small time step
+    mfem::AlfvenOperator oper1(*fespace_u, *fespace_p, small_dt);
+    mfem::Vector b1(total_size);
+    oper1.FormRHS(u, p, b1);
+
+    // Large time step
+    mfem::AlfvenOperator oper2(*fespace_u, *fespace_p, large_dt);
+    mfem::Vector b2(total_size);
+    oper2.FormRHS(u, p, b2);
+
+    // RHS should differ because E_mat *= -dt/2 in AssembleSystem()
+    mfem::real_t norm1 = b1.Norml2();
+    mfem::real_t norm2 = b2.Norml2();
+
+    EXPECT_NE(norm1, norm2) << "Different dt should produce different RHS";
+    // Larger dt should give larger coupling contribution
+    EXPECT_GT(norm2, norm1) << "Larger dt should increase coupling strength";
+}
