@@ -164,39 +164,35 @@ TEST_F(AlfvenTestFixture, EnergyComputation)
     int u_size = fespace_u->GetNDofs();
     int p_size = fespace_p->GetNDofs();
 
-    // Zero state should have zero energy
-    mfem::Vector u_zero(u_size);
-    mfem::Vector p_zero(p_size);
-    u_zero = 0.0;
-    p_zero = 0.0;
-
-    mfem::real_t energy_zero = oper.ComputeEnergy(u_zero, p_zero);
-    // Verifies that the two double values are approximately equal
-    EXPECT_DOUBLE_EQ(energy_zero, 0.0);
-
-    // Test energy at different state magnitudes
+    // Test energy at different state magnitudes (including zero)
     std::vector<mfem::real_t> energies;
-    for (int scale = 1; scale <= 10; ++scale) {
-        mfem::Vector u(u_size);
-        mfem::Vector p(p_size);
-
-        mfem::real_t energy = oper.ComputeEnergy(u, p);
-        energies.push_back(energy);
-
+    
+    // Allocate vectors once
+    mfem::Vector u(u_size);
+    mfem::Vector p(p_size);
+    
+    for (int scale = 0; scale <= 10; ++scale) {
         u = 0.10 * scale;
         p = 0.05 * scale;
-
+        
+        mfem::real_t energy = oper.ComputeEnergy(u, p);
+        
+        // Zero state should have zero energy
+        if (scale == 0) {
+            // Verifies that the two DOUBLE values are approximately equal
+            EXPECT_DOUBLE_EQ(energy, 0.0);
+        }
+        
         // Energy must be finite (no NaN/Inf)
         EXPECT_FALSE(std::isnan(energy)) << "Energy should not be NaN at scale " << scale;
         EXPECT_FALSE(std::isinf(energy)) << "Energy should not be infinite at scale " << scale;
-
-    //  std::cout << "Scale: " << scale << ", Energy: " << energy << std::endl;
+        
         // Energy should increase with state magnitude (quadratic form property)
-        if (scale > 1) {
-            // (energy of scale>2, stored at [scale-2]) GT (energy at previous scale, stored at [scale-1])
-            EXPECT_GT(energy, energies[scale-2]) 
+        if (scale > 0) {
+            EXPECT_GT(energy, energies[scale-1]) 
                 << "Energy should grow with state amplitude";
         }
+        energies.push_back(energy);
     }
 }
 
