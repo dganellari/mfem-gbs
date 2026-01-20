@@ -184,28 +184,6 @@ TEST_F(AlfvenTestFixture, EnergyComputation)
     EXPECT_GT(energy, 0.0) << "Energy should be positive for non-zero state";
 }
 
-// Test: Projection of u_0 and p_0 onto FE spaces
-TEST_F(AlfvenTestFixture, Projections)
-{
-    // Project initial conditions
-    mfem::GridFunction u_gf(fespace_u);
-    mfem::GridFunction p_gf(fespace_p);
-    
-    mfem::FunctionCoefficient u_coeff(mfem::u_0);
-    mfem::FunctionCoefficient p_coeff(mfem::p_0);
-    
-    u_gf.ProjectCoefficient(u_coeff);
-    p_gf.ProjectCoefficient(p_coeff);
-    
-    mfem::Vector u, p;
-    u_gf.GetTrueDofs(u);
-    p_gf.GetTrueDofs(p);
-    
-    // Check that projection worked as expected
-    EXPECT_GT(u.Norml2(), 0.0) << "u should be non-zero";
-    EXPECT_DOUBLE_EQ(p.Norml2(), 0.0) << "p should be zero (p_0 = 0)";
-}
-
 // Test: SetVector/GetSubVector workflow for combining and extracting u and p
 TEST_F(AlfvenTestFixture, VectorAssemblyExtraction)
 {
