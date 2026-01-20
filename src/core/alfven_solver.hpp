@@ -45,6 +45,9 @@ public:
 
     real_t ComputeEnergy(const Vector &u, const Vector &p) const;
 
+    const SparseMatrix& Get_E_Matrix() const { return  E_mat; }
+    const SparseMatrix& Get_F_Matrix() const { return *F_mat; }
+
     ~AlfvenOperator();
 };
 

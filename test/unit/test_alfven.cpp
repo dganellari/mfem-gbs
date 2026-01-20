@@ -244,3 +244,29 @@ TEST_F(AlfvenTestFixture, VectorAssemblyExtraction)
     EXPECT_DOUBLE_EQ(p_extracted[p_size-1], 3.0);
 }
 
+// Test: Verify that E and F matrices are transposes of each other
+TEST_F(AlfvenTestFixture, CouplingBlocks)
+{
+    mfem::real_t dt = 0.01;
+    mfem::AlfvenOperator oper(*fespace_u, *fespace_p, dt);
+    
+    const mfem::SparseMatrix &E = oper.Get_E_Matrix();
+    const mfem::SparseMatrix &F = oper.Get_F_Matrix();
+
+    // Verify F = E^T by checking dimensions
+    EXPECT_EQ(E.Height(), F.Width());
+    EXPECT_EQ(E.Width(),  F.Height());
+
+    // Verify F = E^T numerically: F*x should equal E^T*x
+    mfem::Vector x(E.Width());
+    x.Randomize(1);
+
+    mfem::Vector y_from_F(F.Height());           // y = F*x
+    mfem::Vector y_from_E_transpose(E.Height()); // y = E^T*x
+
+    F.Mult(x, y_from_F);                    // y = F*x
+    E.MultTranspose(x, y_from_E_transpose); // y = E^T*x
+
+    y_from_F -= y_from_E_transpose;  // Should be zero
+    EXPECT_LT(y_from_F.Norml2(), 1e-12) << "F should equal E^T";
+}
