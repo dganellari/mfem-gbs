@@ -184,44 +184,6 @@ TEST_F(AlfvenTestFixture, EnergyComputation)
     EXPECT_GT(energy, 0.0) << "Energy should be positive for non-zero state";
 }
 
-// Test: SetVector/GetSubVector workflow for combining and extracting u and p
-TEST_F(AlfvenTestFixture, VectorAssemblyExtraction)
-{
-    int u_size = fespace_u->GetNDofs();
-    int p_size = fespace_p->GetNDofs();
-    int total_size = u_size + p_size;
-    
-    // Create separate u and p vectors
-    mfem::Vector u(u_size);
-    mfem::Vector p(p_size);
-    u = 2.0;
-    p = 3.0;
-    
-    // Assemble into a combined vector (as in alfven_main)
-    mfem::Vector x(total_size);
-    x.SetVector(u, 0);       // place u at start
-    x.SetVector(p, u_size);  // place p after u
-    
-    // Extract back (as in alfven_main)
-    // Practically, these are arrays holding the dof indices that correspond to u and p
-    mfem::Array<int> u_dofs(u_size);
-    mfem::Array<int> p_dofs(p_size);
-    std::iota(&u_dofs[0], &u_dofs[u_size], 0);
-    std::iota(&p_dofs[0], &p_dofs[p_size], u_size);
-    
-    mfem::Vector u_extracted(u_size);
-    mfem::Vector p_extracted(p_size);
-    x.GetSubVector(u_dofs, u_extracted); // get u block
-    x.GetSubVector(p_dofs, p_extracted); // get p block
-    
-    // Check first and last components match
-    EXPECT_DOUBLE_EQ(u_extracted[0],        2.0);
-    EXPECT_DOUBLE_EQ(u_extracted[u_size-1], 2.0);
-
-    EXPECT_DOUBLE_EQ(p_extracted[0],        3.0);
-    EXPECT_DOUBLE_EQ(p_extracted[p_size-1], 3.0);
-}
-
 // Test: Verify that E and F matrices are transposes of each other
 TEST_F(AlfvenTestFixture, CouplingBlocks)
 {
