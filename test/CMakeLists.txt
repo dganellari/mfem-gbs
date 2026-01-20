@@ -13,14 +13,6 @@ target_compile_definitions(test_alfven PRIVATE DATA_DIR="${CMAKE_SOURCE_DIR}/dat
 # Discover and register tests
 include(GoogleTest)
 
-message(STATUS "Discovering tests for test_wave...")
-gtest_discover_tests(test_wave 
-    WORKING_DIRECTORY ${CMAKE_BINARY_DIR}
-    PROPERTIES ENVIRONMENT "MFEM_DATA_DIR=${CMAKE_SOURCE_DIR}/data"
-)
+gtest_discover_tests(test_wave   WORKING_DIRECTORY ${CMAKE_BINARY_DIR} )
+gtest_discover_tests(test_alfven WORKING_DIRECTORY ${CMAKE_BINARY_DIR} )
 
-message(STATUS "Discovering tests for test_alfven...")
-gtest_discover_tests(test_alfven 
-    WORKING_DIRECTORY ${CMAKE_BINARY_DIR}
-    PROPERTIES ENVIRONMENT "MFEM_DATA_DIR=${CMAKE_SOURCE_DIR}/data"
-)
