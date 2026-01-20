@@ -11,11 +11,6 @@
 // TEST   is for simple tests without shared setup/teardown
 // TEST_F is for tests that share common setup/teardown via a fixture class
 
-TEST(AlfvenTest, BasicTest)
-{
-    EXPECT_EQ(1, 1);
-}
-
 // Simple test for initial solution.
 TEST(AlfvenTest, InitialSolutionU)
 {
