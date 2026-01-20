@@ -130,24 +130,34 @@ TEST_F(AlfvenTestFixture, RHSFormation)
 {
     mfem::real_t dt = 0.01;
     mfem::AlfvenOperator oper(*fespace_u, *fespace_p, dt);
-    
+
     int u_size = fespace_u->GetNDofs();
     int p_size = fespace_p->GetNDofs();
     int total_size = u_size + p_size;
+
+    mfem::Vector u(u_size);
+    mfem::Vector p(p_size);
+
+    u = 1.0;
+    p = 0.5;
     
-    mfem::Vector u_old(u_size);
-    mfem::Vector p_old(p_size);
-    mfem::Vector b(total_size);
-    
-    u_old = 1.0;
-    p_old = 0.5;
-    b = 0.0;
-    
-    oper.FormRHS(u_old, p_old, b);
-    
-    // RHS should be non-zero for non-zero input
-    mfem::real_t rhs_norm = b.Norml2();
-    EXPECT_GT(rhs_norm, 0.0);
+    // Compute RHS for baseline state
+    mfem::Vector b1(total_size);
+    oper.FormRHS(u, p, b1);
+    mfem::real_t norm1 = b1.Norml2();
+    EXPECT_GT(norm1, 0.0) << "RHS should be non-zero for non-zero input";
+
+    // Double the input state
+    u *= 2.0;
+    p *= 2.0;
+
+    mfem::Vector b2(total_size);
+    oper.FormRHS(u, p, b2);
+    mfem::real_t norm2 = b2.Norml2();
+
+    // Doubling inputs should double outputs (linearity property)
+    mfem::real_t ratio = norm2 / norm1;
+    EXPECT_NEAR(ratio, 2.0, 1e-10) << "FormRHS must be linear operator";
 }
 
 // Test: Energy should remain bounded and scale predictably with state magnitude
