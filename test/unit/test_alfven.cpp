@@ -59,16 +59,31 @@ TEST(AlfvenTest, MagneticField)
 // Common setup (mesh, FE space) for fixture tests
 class AlfvenTestFixture : public ::testing::Test {
 protected:
-    std::string mesh_file;
-    mfem::Mesh* mesh;
+    // Static mesh shared across all tests (loaded once)
+    static mfem::Mesh* mesh;
+    
+    // Per-test FE collections and spaces
     mfem::H1_FECollection* fe_coll_u;
     mfem::H1_FECollection* fe_coll_p; // could use the same FE for both u,p
     mfem::FiniteElementSpace* fespace_u;
     mfem::FiniteElementSpace* fespace_p;
     
-    void SetUp() override {
-        mesh_file = std::string(DATA_DIR) + "/ref-cube.mesh";
+    // Called once before all tests in this suite
+    static void SetUpTestSuite() {
+        std::string mesh_file = std::string(DATA_DIR) + "/ref-cube.mesh";
+        // Load mesh once for all tests
         mesh = new mfem::Mesh(mesh_file.c_str(), 1, 1);
+    }
+    
+    // Called once after all tests in this suite
+    static void TearDownTestSuite() {
+        delete mesh;
+    }
+    
+    // SetUp() is called before EACH test.
+    // In principle, I could move everthing to SetUpTestSuite(),
+    //  but keeping FE spaces separate per test is cleaner
+    void SetUp() override {
         int dim = mesh->Dimension();
         
         // H1 space for velocity u
@@ -80,14 +95,17 @@ protected:
         fespace_p = new mfem::FiniteElementSpace(mesh, fe_coll_p);
     }
     
+    // Called after each test
     void TearDown() override {
-        delete mesh;
         delete fe_coll_u;
         delete fe_coll_p;
         delete fespace_u;
         delete fespace_p;
     }
 };
+
+// Initialize static mesh
+mfem::Mesh* AlfvenTestFixture::mesh = nullptr;
 
 // Test: AlfvenOperator constructs successfully with correct block dimensions
 TEST_F(AlfvenTestFixture, OperatorCreation)
